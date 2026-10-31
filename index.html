@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>L &amp; J Cake's | Repostería por encargo</title>
+<meta name="description" content="Tortas, cupcakes y dulces por encargo. Consulta disponibilidad por WhatsApp.">
+<meta name="theme-color" content="#F7C8D4">
+<style>
+:root{--crema:#FFF5F0;--rosa:#F7C8D4;--rosa2:#A93D63;--rosa3:#8F3355;--cara:#8A5A2B;--mar:#4A2E1A;--mut:#7A4F5E;--bor:#F0D0D8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--crema);color:var(--mar);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;margin:0}
+:focus-visible{outline:3px solid var(--cara);outline-offset:2px}
+header{background:var(--rosa);padding:36px 16px 44px;text-align:center;position:relative;margin-bottom:28px}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-12px;height:24px;background:radial-gradient(circle at 12px 0,var(--rosa) 12px,transparent 13px) repeat-x;background-size:24px 24px}
+header h1{font-size:clamp(34px,9vw,56px);color:var(--rosa3);font-style:italic;line-height:1.1}
+header p{margin:8px 0 0;color:var(--mar);font-size:17px}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px 96px}
+.aviso{background:#fff;border:1px solid var(--bor);border-radius:8px;padding:10px 14px;margin:0 0 18px;font-size:14px;color:var(--mut)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{border:1px solid var(--rosa2);background:transparent;color:var(--rosa3);border-radius:999px;padding:7px 16px;font:inherit;font-size:14px;cursor:pointer}
+.chip.on{background:var(--rosa2);color:#fff}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.card{background:#fff;border:1px solid var(--bor);border-radius:6px 26px 6px 26px;overflow:hidden;display:flex;flex-direction:column}
+.foto{aspect-ratio:4/3;background:var(--rosa) center/cover no-repeat}
+.info{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.info h3{font-size:20px}
+.info p{margin:0;font-size:14px;color:var(--mut)}
+.cat{font-size:13px;color:var(--cara)}
+.precio{color:var(--cara);font-weight:600;margin-top:2px}
+.main{background:var(--rosa2);color:#fff;border:0;border-radius:10px;padding:12px 14px;font:inherit;font-size:15px;cursor:pointer;margin-top:auto}
+.info .main{margin-top:10px}
+.sec{background:transparent;color:var(--mut);border:1px solid var(--bor);border-radius:10px;padding:10px;font:inherit;cursor:pointer}
+.como{margin-top:40px}
+.como h2{font-size:24px;margin-bottom:8px}
+.como ol{margin:0;padding-left:22px;color:var(--mut)}
+footer{text-align:center;padding:0 16px 100px;font-size:14px;color:var(--mut)}
+.wa{position:fixed;right:14px;bottom:14px;background:#1F7A4D;color:#fff;text-decoration:none;border-radius:999px;padding:12px 18px;font-weight:500;z-index:5}
+dialog{border:0;border-radius:18px;padding:0;width:min(520px,94vw);max-height:92vh;background:var(--crema);color:var(--mar)}
+dialog::backdrop{background:rgba(74,46,26,.55)}
+.dl{padding:20px;display:grid;gap:12px}
+.dl h2{font-size:24px;color:var(--rosa3)}
+label{display:grid;gap:4px;font-size:14px;color:var(--mut)}
+select,input,textarea{font:inherit;padding:10px;border:1px solid var(--bor);border-radius:8px;background:#fff;color:var(--mar);width:100%}
+fieldset{border:1px solid var(--bor);border-radius:8px;padding:8px 12px;display:grid;gap:6px}
+legend{font-size:14px;color:var(--mut);padding:0 4px}
+.chk{display:flex;gap:8px;align-items:center;color:var(--mar)}
+.chk input{width:auto}
+.total{margin:0;font-size:18px;font-weight:600;color:var(--cara)}
+.err{margin:0;color:#A32D2D;font-size:14px;min-height:20px}
+</style>
+</head>
+<body>
+<header><h1 id="neg"></h1><p>Repostería por encargo</p></header>
+<main class="wrap">
+  <p class="aviso" id="aviso"></p>
+  <nav class="chips" id="chips" aria-label="Categorías"></nav>
+  <section class="grid" id="grid"></section>
+  <section class="como">
+    <h2>Cómo pedir</h2>
+    <ol>
+      <li>Elige tu dulce y personalízalo.</li>
+      <li>Indica la fecha en que lo necesitas y envía la consulta por WhatsApp.</li>
+      <li>Te confirmamos si podemos aceptar el pedido y acordamos los detalles.</li>
+    </ol>
+  </section>
+</main>
+<footer id="pie"></footer>
+<a class="wa" id="wa" target="_blank" rel="noopener">Escríbenos</a>
+<dialog id="dlg"><form class="dl" id="frm" method="dialog"></form></dialog>
+
+<script src="productos.js"></script>
+<script>
+(function(){
+var C=window.CONFIG||{},P=window.PRODUCTOS,A=window.AGREGADOS||{},cur,cat='Todo';
+var grid=document.getElementById('grid'),chips=document.getElementById('chips'),dlg=document.getElementById('dlg'),frm=document.getElementById('frm');
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function fmt(n,m){return Number(n).toLocaleString('es')+' '+m}
+function iso(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function minFecha(){var d=new Date();d.setDate(d.getDate()+(C.diasMinimos||5));return iso(d)}
+function $(id){return document.getElementById(id)}
+
+$('neg').textContent=C.negocio||'Catálogo';
+$('pie').textContent='© '+(C.negocio||'')+'. Pedidos por encargo.';
+$('aviso').textContent='Los pedidos se hacen con al menos '+(C.diasMinimos||5)+' días de anticipación y quedan sujetos a confirmación. Los precios son estimados.';
+$('wa').href='https://wa.me/'+C.whatsapp+'?text='+encodeURIComponent('Hola, quiero hacer una consulta.');
+if(!Array.isArray(P)){grid.innerHTML='<p class="err">No se pudo cargar la lista de productos. Revisa las comas y comillas de productos.js.</p>';return}
+
+function base(p,s){
+  if(p.precios&&p.precios.length){
+    var gs=(p.grupos||[]).filter(function(g){return g.afectaPrecio});
+    for(var i=0;i<p.precios.length;i++){var r=p.precios[i];
+      if(gs.every(function(g){return r[g.nombre]===s[g.nombre]}))return r.precio}
+    return null}
+  return typeof p.precio==='number'?p.precio:null}
+function desde(p){
+  if(p.precios&&p.precios.length)return Math.min.apply(null,p.precios.map(function(r){return r.precio}));
+  return typeof p.precio==='number'?p.precio:null}
+
+function pintar(){
+  grid.innerHTML=P.map(function(p,i){
+    if(cat!=='Todo'&&p.categoria!==cat)return '';
+    var d=desde(p),pr=d==null?'Consultar precio':((p.precios&&p.precios.length?'Desde ':'')+fmt(d,p.moneda||''));
+    var f=p.foto?' style="background-image:url(\''+esc(p.foto)+'\')"':'';
+    return '<article class="card"><div class="foto"'+f+'></div><div class="info"><span class="cat">'+esc(p.categoria)+'</span><h3>'+esc(p.nombre)+'</h3><p>'+esc(p.descripcion)+'</p><span class="precio">'+esc(pr)+'</span><button class="main" data-i="'+i+'">Consultar disponibilidad</button></div></article>'}).join('')}
+
+var cats=['Todo'];
+P.forEach(function(p){if(p.categoria&&cats.indexOf(p.categoria)<0)cats.push(p.categoria)});
+chips.innerHTML=cats.map(function(c){return '<button class="chip'+(c===cat?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</button>'}).join('');
+chips.onclick=function(e){var c=e.target.getAttribute('data-c');if(c===null)return;cat=c;
+  [].forEach.call(chips.children,function(b){b.classList.toggle('on',b.getAttribute('data-c')===c)});pintar()};
+grid.onclick=function(e){var i=e.target.getAttribute('data-i');if(i!==null)abrir(P[i])};
+
+function sel(){var s={};(cur.grupos||[]).forEach(function(g,k){s[g.nombre]=frm.querySelector('[data-g="'+k+'"]').value});return s}
+function agSel(){return [].slice.call(frm.querySelectorAll('[data-a]:checked')).map(function(c){return A[c.getAttribute('data-a')]})}
+function total(){var t=base(cur,sel()),pend=false;
+  agSel().forEach(function(a){if(typeof a.precio==='number'){if(t!=null)t+=a.precio}else pend=true});
+  return {t:t,pend:pend}}
+function calc(){var r=total(),el=$('tot');
+  if(r.t==null)el.textContent=(cur.precios&&cur.precios.length)?'Elige las opciones para ver el precio':'Precio a consultar';
+  else el.textContent='Total estimado: '+fmt(r.t,cur.moneda||'')+(r.pend?' (más agregados por consultar)':'')}
+
+function abrir(p){
+  cur=p;var h='<h2>'+esc(p.nombre)+'</h2>';
+  (p.grupos||[]).forEach(function(g,k){
+    h+='<label>'+esc(g.nombre)+'<select data-g="'+k+'"><option value="">Elige una opción</option>'+g.valores.map(function(v){return '<option>'+esc(v)+'</option>'}).join('')+'</select></label>'});
+  var ag=(p.agregados||[]).filter(function(id){return A[id]});
+  if(ag.length)h+='<fieldset><legend>Agregados</legend>'+ag.map(function(id){var a=A[id];
+    return '<label class="chk"><input type="checkbox" data-a="'+esc(id)+'">'+esc(a.texto)+' ('+(typeof a.precio==='number'?'+'+fmt(a.precio,p.moneda||''):'consultar')+')</label>'}).join('')+'</fieldset>';
+  if(p.dedicatoria)h+='<label>Dedicatoria (opcional)<input id="ded" maxlength="80"></label>';
+  h+='<label>Fecha en que lo necesitas<input type="date" id="fec" min="'+minFecha()+'"></label>';
+  h+='<label>Tu nombre<input id="nom" autocomplete="name"></label>';
+  h+='<label>Notas (opcional)<textarea id="not" rows="2"></textarea></label>';
+  h+='<p class="total" id="tot"></p><p class="err" id="err" role="alert"></p>';
+  h+='<button type="button" class="main" id="env">Enviar consulta por WhatsApp</button><button type="button" class="sec" id="cer">Cerrar</button>';
+  frm.innerHTML=h;calc();dlg.showModal()}
+
+function enviar(){
+  var err=$('err'),s=sel(),fec=$('fec').value,nom=$('nom').value.trim();
+  var falta=(cur.grupos||[]).filter(function(g){return !s[g.nombre]});
+  if(falta.length){err.textContent='Elige: '+falta.map(function(g){return g.nombre}).join(', ')+'.';return}
+  if(!fec||fec<minFecha()){err.textContent='Elige una fecha con al menos '+(C.diasMinimos||5)+' días de anticipación.';return}
+  if(!nom){err.textContent='Escribe tu nombre.';return}
+  var L=['Hola, quiero consultar si pueden hacerme:','- Producto: '+cur.nombre];
+  (cur.grupos||[]).forEach(function(g){L.push('- '+g.nombre+': '+s[g.nombre])});
+  var ags=agSel();if(ags.length)L.push('- Agregados: '+ags.map(function(a){return a.texto}).join(', '));
+  var d=$('ded');if(d&&d.value.trim())L.push('- Dedicatoria: '+d.value.trim());
+  L.push('- Fecha deseada: '+fec.split('-').reverse().join('/'));
+  L.push('- Nombre: '+nom);
+  var n=$('not').value.trim();if(n)L.push('- Notas: '+n);
+  var r=total();
+  L.push('- Total estimado: '+(r.t==null?'por consultar':fmt(r.t,cur.moneda||'')+(r.pend?' (más agregados por consultar)':'')));
+  window.open('https://wa.me/'+C.whatsapp+'?text='+encodeURIComponent(L.join('\n')),'_blank')}
+
+frm.onchange=calc;
+frm.onclick=function(e){if(e.target.id==='cer')dlg.close();if(e.target.id==='env')enviar()};
+pintar();
+})();
+</script>
+</body>
+</html>
